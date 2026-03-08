@@ -56,10 +56,9 @@ if METADATA_PATH.exists():
     best_info = metadata["models"][best_key]
 
     st.success(f"**Best Model:** {best_key} — F1 = {metadata['best_f1']:.4f}")
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
     col1.metric("Total Models Trained", len(metadata["models"]))
     col2.metric("Best F1 Score", f"{metadata['best_f1']:.4f}")
-    col3.metric("Performance Mark", f"{best_info['performance_mark']:.1f}/35")
 else:
     st.info("No pre-trained models found. Run `python -m scripts.train_all` to train all models, or use the Model Training page.")
 

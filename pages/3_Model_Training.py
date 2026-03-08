@@ -26,12 +26,11 @@ def _display_results(results: dict):
     st.subheader("Training Results")
 
     # Metrics row
-    m1, m2, m3, m4, m5 = st.columns(5)
+    m1, m2, m3, m4 = st.columns(4)
     m1.metric("F1 Score", f"{results['f1']:.4f}")
     m2.metric("Precision", f"{results['precision']:.4f}")
     m3.metric("Recall", f"{results['recall']:.4f}")
     m4.metric("FPR", f"{results['fpr']:.4f}")
-    m5.metric("Mark", f"{results['performance_mark']:.1f}/35")
 
     # Additional info
     info1, info2, info3 = st.columns(3)
@@ -57,12 +56,12 @@ def _display_results(results: dict):
     )
     # Fix: annotated heatmap reverses y-axis by default
     fig_cm.update_yaxes(autorange="reversed")
-    st.plotly_chart(fig_cm, use_container_width=True)
+    st.plotly_chart(fig_cm, width="stretch")
 
     # Per-fold results
     st.subheader("Per-Fold Results")
     fold_df = pd.DataFrame(results["fold_results"])
-    st.dataframe(fold_df[["fold", "f1", "precision", "recall", "fpr"]], use_container_width=True, hide_index=True)
+    st.dataframe(fold_df[["fold", "f1", "precision", "recall", "fpr"]], width="stretch", hide_index=True)
 
     # Fold F1 bar chart
     fig_fold = go.Figure()
@@ -77,7 +76,7 @@ def _display_results(results: dict):
         yaxis_title="F1 Score",
         yaxis_range=[0, 1],
     )
-    st.plotly_chart(fig_fold, use_container_width=True)
+    st.plotly_chart(fig_fold, width="stretch")
 
 
 # ── Main page ────────────────────────────────────────────────────────────

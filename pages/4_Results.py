@@ -46,12 +46,11 @@ log.info(f"Viewing results for: {selected_key}")
 
 # ── Metrics row ──────────────────────────────────────────────────────────
 st.subheader("Metrics")
-m1, m2, m3, m4, m5 = st.columns(5)
+m1, m2, m3, m4 = st.columns(4)
 m1.metric("F1 Score", f"{results['f1']:.4f}")
 m2.metric("Precision", f"{results['precision']:.4f}")
 m3.metric("Recall", f"{results['recall']:.4f}")
 m4.metric("FPR", f"{results['fpr']:.4f}")
-m5.metric("Mark", f"{results['performance_mark']:.1f}/35")
 
 # Extra info if available
 extra_cols = st.columns(3)
@@ -80,7 +79,7 @@ fig_cm.update_layout(
     yaxis_title="Actual",
 )
 fig_cm.update_yaxes(autorange="reversed")
-st.plotly_chart(fig_cm, use_container_width=True)
+st.plotly_chart(fig_cm, width="stretch")
 
 # ── Per-fold results ─────────────────────────────────────────────────────
 if "fold_results" in results and results["fold_results"]:
@@ -89,7 +88,7 @@ if "fold_results" in results and results["fold_results"]:
     fold_df = pd.DataFrame(fold_data)
 
     display_cols = [c for c in ["fold", "f1", "precision", "recall", "fpr"] if c in fold_df.columns]
-    st.dataframe(fold_df[display_cols], use_container_width=True, hide_index=True)
+    st.dataframe(fold_df[display_cols], width="stretch", hide_index=True)
 
     # Fold F1 bar chart
     fig_fold = go.Figure()
@@ -106,7 +105,7 @@ if "fold_results" in results and results["fold_results"]:
         yaxis_title="F1 Score",
         yaxis_range=[0, 1],
     )
-    st.plotly_chart(fig_fold, use_container_width=True)
+    st.plotly_chart(fig_fold, width="stretch")
 
     # Summary statistics
     f1_values = [r["f1"] for r in fold_data]
@@ -145,6 +144,6 @@ if "roc" in results and results["roc"]:
             xaxis_range=[0, 1],
             yaxis_range=[0, 1.05],
         )
-        st.plotly_chart(fig_roc, use_container_width=True)
+        st.plotly_chart(fig_roc, width="stretch")
 
 log.info(f"Results page viewed for: {selected_key}")

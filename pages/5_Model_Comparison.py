@@ -33,7 +33,6 @@ if METADATA_PATH.exists():
             "Precision": info["precision"],
             "Recall": info["recall"],
             "FPR": info["fpr"],
-            "Mark": info["performance_mark"],
             "Type": model_type,
             "Source": "Pre-trained",
         }
@@ -47,7 +46,6 @@ for key, info in session_results.items():
         "Precision": info["precision"],
         "Recall": info["recall"],
         "FPR": info["fpr"],
-        "Mark": info["performance_mark"],
         "Type": info.get("type", "traditional"),
         "Source": "Custom",
     }
@@ -67,7 +65,7 @@ leaderboard.index.name = "Rank"
 
 # ── Best model highlight ─────────────────────────────────────────────────
 best_row = leaderboard.iloc[0]
-st.success(f"**Best Model:** {best_row['Model']} — F1 = {best_row['F1']:.4f} | Mark = {best_row['Mark']:.1f}/35")
+st.success(f"**Best Model:** {best_row['Model']} — F1 = {best_row['F1']:.4f}")
 
 # ── Filter by model type ─────────────────────────────────────────────────
 available_types = sorted(leaderboard["Type"].unique().tolist())
@@ -98,9 +96,8 @@ styled = filtered.style.apply(_highlight_best_f1, axis=1).format({
     "Precision": "{:.4f}",
     "Recall": "{:.4f}",
     "FPR": "{:.4f}",
-    "Mark": "{:.1f}",
 })
-st.dataframe(styled, use_container_width=True)
+st.dataframe(styled, width="stretch")
 
 # ── F1 comparison bar chart ──────────────────────────────────────────────
 st.subheader("F1 Score Comparison")
@@ -122,7 +119,7 @@ fig_bar.update_layout(
     xaxis_tickangle=-45,
 )
 fig_bar.update_traces(textposition="outside")
-st.plotly_chart(fig_bar, use_container_width=True)
+st.plotly_chart(fig_bar, width="stretch")
 
 # ── Radar chart for top 5 models ─────────────────────────────────────────
 st.subheader("Radar Chart — Top 5 Models")
@@ -162,7 +159,7 @@ fig_radar.update_layout(
     title="Top Models — Multi-Metric Radar",
     showlegend=True,
 )
-st.plotly_chart(fig_radar, use_container_width=True)
+st.plotly_chart(fig_radar, width="stretch")
 
 # ── Summary statistics ───────────────────────────────────────────────────
 st.subheader("Summary")

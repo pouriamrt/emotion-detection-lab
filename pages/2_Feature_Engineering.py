@@ -65,7 +65,7 @@ for method in FEATURE_METHODS:
 
 import pandas as pd
 cache_df = pd.DataFrame(cache_data)
-st.dataframe(cache_df, use_container_width=True, hide_index=True)
+st.dataframe(cache_df, width="stretch", hide_index=True)
 
 # ── Extract / Load button ────────────────────────────────────────────────
 st.subheader("Extract Features")

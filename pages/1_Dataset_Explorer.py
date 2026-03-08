@@ -42,7 +42,7 @@ fig_pie = px.pie(
     title="Happy vs Neutral Distribution",
 )
 fig_pie.update_traces(textinfo="percent+value")
-st.plotly_chart(fig_pie, use_container_width=True)
+st.plotly_chart(fig_pie, width="stretch")
 
 # ── Sample images ────────────────────────────────────────────────────────
 st.subheader("Sample Images")
@@ -60,7 +60,7 @@ for label in ["happy", "neutral"]:
             img_bgr = cv2.imread(str(img_path))
             if img_bgr is not None:
                 img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-                cols[i].image(img_rgb, caption=row["filename"], use_container_width=True)
+                cols[i].image(img_rgb, caption=row["filename"], width="stretch")
             else:
                 cols[i].warning(f"Cannot read: {row['filename']}")
         else:
@@ -101,7 +101,7 @@ if sample_stats:
     scol4.metric("Most Common Format", stats_df["format"].mode().iloc[0])
 
     with st.expander("Detailed image statistics table"):
-        st.dataframe(stats_df, use_container_width=True)
+        st.dataframe(stats_df, width="stretch")
 else:
     st.warning("Could not load any images for statistics.")
 
