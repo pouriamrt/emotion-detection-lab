@@ -26,8 +26,5 @@ wheels/
 .idea/
 .vscode/
 
-# Cached features (large, not needed — extracted at runtime)
-artifacts/features/
-
 # Lock files
 uv.lock
