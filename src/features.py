@@ -279,7 +279,8 @@ def extract_clip(images_color: np.ndarray) -> np.ndarray:
 def extract_insightface(images_color: np.ndarray) -> np.ndarray:
     """Extract InsightFace ArcFace (buffalo_l) embeddings (512-dim).
 
-    Resizes to 640x640 for detection. Pads zeros if face not detected.
+    Bypasses face detection and feeds images directly to the ArcFace
+    recognition model, since dataset images are already face crops.
     Input: BGR uint8 (N, H, W, 3). Returns (N, 512) float array.
     """
     import cv2
@@ -289,26 +290,17 @@ def extract_insightface(images_color: np.ndarray) -> np.ndarray:
 
     app = FaceAnalysis(name="buffalo_l", providers=["CPUExecutionProvider"])
     app.prepare(ctx_id=0, det_size=(640, 640))
+    rec_model = app.models["recognition"]
 
+    # Process in batches — get_feat handles resize/normalize internally
+    batch_size = 32
     features = []
-    n_missed = 0
-    for img_bgr in tqdm(images_color, desc="InsightFace"):
-        # Resize for detection
-        img_resized = cv2.resize(img_bgr, (640, 640))
-        faces = app.get(img_resized)
-        if faces:
-            # Use the face with highest detection score
-            best_face = max(faces, key=lambda f: f.det_score)
-            features.append(best_face.embedding.flatten())
-        else:
-            n_missed += 1
-            features.append(np.zeros(512, dtype=np.float32))
+    for i in tqdm(range(0, len(images_color), batch_size), desc="InsightFace"):
+        batch = [cv2.resize(img, (112, 112)) for img in images_color[i : i + batch_size]]
+        embeddings = rec_model.get_feat(batch)
+        features.append(embeddings)
 
-    if n_missed > 0:
-        log.warning(
-            f"Face not detected in {n_missed}/{len(images_color)} images (InsightFace)"
-        )
-    result = np.array(features, dtype=np.float32)
+    result = np.concatenate(features, axis=0).astype(np.float32)
     log.info(f"InsightFace features shape: {result.shape}")
     return result
 

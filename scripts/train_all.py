@@ -56,8 +56,9 @@ FEATURE_COMBOS: list[list[str]] = [
 
 
 def _run_key(model_name: str, features: list[str]) -> str:
-    """Build a unique run key like ``SVM__InsightFace+CLIP-ViT-B/32``."""
-    return f"{model_name}__{'+'.join(features)}"
+    """Build a unique run key like ``SVM__InsightFace+CLIP-ViT-B_32``."""
+    tag = "+".join(features).replace("/", "_")
+    return f"{model_name}__{tag}"
 
 
 def _safe_json(obj):
