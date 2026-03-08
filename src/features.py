@@ -112,14 +112,21 @@ def extract_gabor(images: np.ndarray) -> np.ndarray:
 
 
 def extract_landmarks(images_color: np.ndarray) -> np.ndarray:
-    """Extract facial landmark features via MediaPipe Face Mesh.
+    """Extract facial landmark features via MediaPipe FaceLandmarker (Tasks API).
 
     Extracts key points for mouth, eyes, and eyebrows, flattens (x,y,z)
     coordinates, and adds a mouth width/height ratio feature.
     Input: BGR uint8 images (N, H, W, 3).
     Returns (N, n_features) float array. Pads zeros if face not detected.
     """
+    import cv2
     import mediapipe as mp
+    from mediapipe.tasks.python import BaseOptions
+    from mediapipe.tasks.python.vision import (
+        FaceLandmarker,
+        FaceLandmarkerOptions,
+        RunningMode,
+    )
 
     log.info(f"Extracting Landmark features from {len(images_color)} images")
 
@@ -132,40 +139,57 @@ def extract_landmarks(images_color: np.ndarray) -> np.ndarray:
     # Total features: 24 landmarks * 3 coords + 1 ratio = 73
     n_features = len(all_idx) * 3 + 1
 
-    face_mesh = mp.solutions.face_mesh.FaceMesh(
-        static_image_mode=True,
-        max_num_faces=1,
-        refine_landmarks=False,
-        min_detection_confidence=0.5,
+    # Use the Tasks API model file
+    model_path = str(Path(__file__).parent.parent / "artifacts" / "face_landmarker.task")
+    options = FaceLandmarkerOptions(
+        base_options=BaseOptions(model_asset_path=model_path),
+        running_mode=RunningMode.IMAGE,
+        num_faces=1,
+        min_face_detection_confidence=0.3,
+        min_face_presence_confidence=0.3,
     )
+    landmarker = FaceLandmarker.create_from_options(options)
 
     features = []
     n_missed = 0
     for img_bgr in tqdm(images_color, desc="Landmarks"):
-        import cv2
-        img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
-        results = face_mesh.process(img_rgb)
+        # Resize up if too small — face detection needs reasonable resolution
+        h, w = img_bgr.shape[:2]
+        if max(h, w) < 300:
+            scale = 300 / max(h, w)
+            img_bgr_up = cv2.resize(img_bgr, (int(w * scale), int(h * scale)))
+        else:
+            img_bgr_up = img_bgr
+        img_rgb = cv2.cvtColor(img_bgr_up, cv2.COLOR_BGR2RGB)
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=img_rgb)
+        result = landmarker.detect(mp_image)
 
-        if results.multi_face_landmarks:
-            lm = results.multi_face_landmarks[0].landmark
+        if result.face_landmarks:
+            lm = result.face_landmarks[0]
             coords = []
             for idx in all_idx:
-                coords.extend([lm[idx].x, lm[idx].y, lm[idx].z])
+                if idx < len(lm):
+                    coords.extend([lm[idx].x, lm[idx].y, lm[idx].z])
+                else:
+                    coords.extend([0.0, 0.0, 0.0])
             # Mouth width/height ratio
-            mouth_width = np.sqrt(
-                (lm[61].x - lm[291].x) ** 2 + (lm[61].y - lm[291].y) ** 2
-            )
-            mouth_height = np.sqrt(
-                (lm[0].x - lm[17].x) ** 2 + (lm[0].y - lm[17].y) ** 2
-            )
-            ratio = mouth_width / max(mouth_height, 1e-6)
+            if 61 < len(lm) and 291 < len(lm) and 0 < len(lm) and 17 < len(lm):
+                mouth_width = np.sqrt(
+                    (lm[61].x - lm[291].x) ** 2 + (lm[61].y - lm[291].y) ** 2
+                )
+                mouth_height = np.sqrt(
+                    (lm[0].x - lm[17].x) ** 2 + (lm[0].y - lm[17].y) ** 2
+                )
+                ratio = mouth_width / max(mouth_height, 1e-6)
+            else:
+                ratio = 0.0
             coords.append(ratio)
             features.append(coords)
         else:
             n_missed += 1
             features.append([0.0] * n_features)
 
-    face_mesh.close()
+    landmarker.close()
     if n_missed > 0:
         log.warning(f"Face not detected in {n_missed}/{len(images_color)} images")
     result = np.array(features, dtype=np.float32)
