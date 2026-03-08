@@ -12,9 +12,11 @@ wheels/
 
 # Environment variables
 .env
+client_*.json
 
 # Data
 data/
+docs/
 
 # Artifacts
 artifacts/features/
