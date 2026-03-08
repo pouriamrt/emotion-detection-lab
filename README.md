@@ -1,73 +1,108 @@
+<div align="center">
+
 # Emotion Detection Lab
 
-Binary classification of facial expressions (**happy** vs **neutral**) on the SMILE_PLUS dataset. Built as an interactive Streamlit web app with Google OAuth, 51 trained model combinations, and batch prediction.
+**Binary classification of facial expressions (happy vs neutral)**
 
-> **Course:** CSI 5386 — Affective Computing, University of Ottawa
-> **Best Model:** CLIP Linear Probe — F1 = 0.9758
+[![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://python.org)
+[![Streamlit](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
+[![PyTorch](https://img.shields.io/badge/PyTorch-2.4+-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
+[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-Deployed-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
+[![License](https://img.shields.io/badge/License-Academic-gray)]()
+
+*An interactive web application for training, evaluating, and comparing 51 emotion classification models on the SMILE_PLUS dataset.*
+
+**CSI 5386 — Affective Computing | University of Ottawa**
 
 ---
 
-## Features
+**Best Model:** CLIP Linear Probe | **F1 = 0.9758** | **51 Models Trained** | **10-Fold CV**
 
-- **Dataset Explorer** — Browse class distribution, sample images, and image statistics
-- **Feature Engineering** — Select, extract, and cache 7 feature methods with status tracking
-- **Model Training** — Train any model/feature combination interactively with hyperparameter tuning
-- **Results Viewer** — Confusion matrices, ROC curves, per-fold breakdowns for every model run
-- **Model Comparison** — Leaderboard, F1 bar chart, and radar chart across all 51 models
-- **Batch Prediction** — Upload face images and classify them with any trained model
+</div>
 
-## Architecture
+---
+
+## Overview
+
+Emotion Detection Lab is a full-stack ML application that lets you explore a facial expression dataset, engineer features, train classifiers, compare results on a leaderboard, and run batch predictions — all through a clean Streamlit interface with Google OAuth.
+
+### Pages
+
+| Page | Description |
+|------|-------------|
+| **Dataset Explorer** | Browse class distribution, sample images, and image statistics |
+| **Feature Engineering** | Select, extract, and cache 7 feature methods with status tracking |
+| **Model Training** | Train any model/feature combination with hyperparameter tuning |
+| **Results** | Confusion matrices, ROC curves, and per-fold breakdowns |
+| **Model Comparison** | Leaderboard, bar charts, and radar chart across all models |
+| **Batch Prediction** | Upload face images and classify them with any trained model |
+
+---
+
+## Project Structure
 
 ```
-app.py                          # Home page + navigation
-pages/
-  1_Dataset_Explorer.py         # Data visualization
-  2_Feature_Engineering.py      # Feature extraction pipeline
-  3_Model_Training.py           # Interactive training with 10-fold CV
-  4_Results.py                  # Per-model metrics & charts
-  5_Model_Comparison.py         # Cross-model leaderboard
-  6_Batch_Prediction.py         # Inference on uploaded images
-src/
-  auth.py                       # Google OAuth with PKCE
-  config.py                     # Paths, constants, model/feature registries
-  data_loader.py                # SMILE_PLUS dataset loading
-  features.py                   # 7 feature extractors with caching
-  models.py                     # Model factories (traditional + deep)
-  evaluation.py                 # 10-fold stratified cross-validation
-  logger.py                     # Loguru logging setup
-scripts/
-  train_all.py                  # Offline batch training of all 51 combos
-artifacts/
-  metadata.json                 # Leaderboard & best model reference
-  models/                       # Trained .joblib files
-  features/                     # Cached .npy feature matrices
-  results/                      # Per-model CV result .json files
+.
+├── app.py                        # Home page & navigation
+├── pages/
+│   ├── 1_Dataset_Explorer.py     # Data visualization
+│   ├── 2_Feature_Engineering.py  # Feature extraction pipeline
+│   ├── 3_Model_Training.py       # Interactive training with 10-fold CV
+│   ├── 4_Results.py              # Per-model metrics & charts
+│   ├── 5_Model_Comparison.py     # Cross-model leaderboard
+│   └── 6_Batch_Prediction.py     # Inference on uploaded images
+├── src/
+│   ├── auth.py                   # Google OAuth 2.0 with PKCE
+│   ├── config.py                 # Paths, constants, registries
+│   ├── data_loader.py            # SMILE_PLUS dataset loading
+│   ├── features.py               # 7 feature extractors with caching
+│   ├── models.py                 # Model factories (traditional + deep)
+│   ├── evaluation.py             # 10-fold stratified cross-validation
+│   └── logger.py                 # Loguru logging setup
+├── scripts/
+│   └── train_all.py              # Offline batch training of all 51 models
+├── artifacts/
+│   ├── metadata.json             # Leaderboard & best model reference
+│   ├── models/                   # Trained .joblib files (51 models)
+│   ├── features/                 # Cached .npy feature matrices
+│   └── results/                  # Per-model CV result .json files
+├── data/                         # SMILE_PLUS dataset (500 images)
+├── Dockerfile                    # Production container (CPU-only PyTorch)
+├── Makefile                      # Build, deploy, and manage commands
+├── requirements.txt              # Python dependencies
+└── pyproject.toml                # Project metadata
 ```
+
+---
 
 ## Dataset
 
-**SMILE_PLUS Training Set** — 500 grayscale JPEG images (162 x 193 px), balanced 250/250 happy/neutral.
+**SMILE_PLUS Training Set** — 500 grayscale JPEG images (162 x 193 px)
 
-| Class   | Count |
-|---------|-------|
-| Happy   | 250   |
-| Neutral | 250   |
+| Class | Count | Split |
+|-------|-------|-------|
+| Happy | 250 | 50% |
+| Neutral | 250 | 50% |
 
-## Feature Extractors
+---
 
-| Method | Type | Dimensionality | Description |
-|--------|------|----------------|-------------|
-| HOG | Traditional | Variable | Histogram of Oriented Gradients — edge and shape information |
-| LBP | Traditional | Variable | Local Binary Patterns — multi-scale texture encoding |
-| Gabor | Traditional | Variable | Gabor filter bank — multi-scale, multi-orientation frequency features |
-| Landmarks | Traditional | Variable | MediaPipe facial landmarks — geometric distances between key points |
-| ConvNeXt-Tiny | Deep | 768 | ImageNet-pretrained general-purpose visual features |
-| CLIP-ViT-B/32 | Deep | 512 | CLIP Vision Transformer — semantically rich embeddings |
-| InsightFace | Deep | 512 | ArcFace — face-specific embeddings |
+## Pipeline
 
-## Models
+### Feature Extractors
 
-### Traditional ML (6 classifiers x 8 feature combinations = 48 models)
+| Method | Type | Dims | Description |
+|--------|------|------|-------------|
+| HOG | Traditional | — | Histogram of Oriented Gradients — edge & shape info |
+| LBP | Traditional | — | Local Binary Patterns — multi-scale texture encoding |
+| Gabor | Traditional | — | Gabor filter bank — multi-orientation frequency features |
+| Landmarks | Traditional | — | MediaPipe face landmarks — geometric distances |
+| ConvNeXt-Tiny | Deep | 768 | ImageNet-pretrained visual features |
+| CLIP-ViT-B/32 | Deep | 512 | Semantically rich vision-language embeddings |
+| InsightFace | Deep | 512 | ArcFace face-specific embeddings |
+
+### Models
+
+**6 Traditional Classifiers** trained on **8 feature combinations** = **48 models**
 
 | Classifier | Key Hyperparameters |
 |------------|-------------------|
@@ -78,7 +113,16 @@ artifacts/
 | Logistic Regression | C, penalty |
 | KNN | n_neighbors, weights, metric |
 
-**Feature combinations trained:**
+**3 Deep Linear Probes** — 2-layer MLP on frozen embeddings
+
+| Model | Embedding Source |
+|-------|-----------------|
+| CLIP Linear Probe | CLIP-ViT-B/32 |
+| ConvNeXt-Tiny (Fine-tune) | ConvNeXt-Tiny |
+| InsightFace + FC | InsightFace |
+
+<details>
+<summary><strong>Feature combinations (8)</strong></summary>
 
 | # | Features |
 |---|----------|
@@ -91,47 +135,45 @@ artifacts/
 | 7 | HOG + LBP + Gabor + Landmarks |
 | 8 | HOG + LBP + Gabor + InsightFace |
 
-### Deep Linear Probes (3 models)
+</details>
 
-| Model | Feature Source | Architecture |
-|-------|---------------|--------------|
-| CLIP Linear Probe | CLIP-ViT-B/32 | 2-layer MLP on frozen CLIP embeddings |
-| ConvNeXt-Tiny (Fine-tune) | ConvNeXt-Tiny | 2-layer MLP on frozen ConvNeXt embeddings |
-| InsightFace + FC | InsightFace | 2-layer MLP on frozen ArcFace embeddings |
+### Evaluation
 
-## Evaluation
-
-All models are evaluated with **10-fold stratified cross-validation**:
+All models evaluated with **10-fold stratified cross-validation** (seed 42):
 
 - **Metrics:** F1, Precision, Recall, FPR, Confusion Matrix, ROC/AUC
-- **Seed:** 42 (deterministic splits)
-- **Scaling:** StandardScaler for traditional models (fit on train, transform on val per fold)
+- **Scaling:** StandardScaler per fold for traditional models
+
+---
+
+## Results
 
 ### Top 5 Models
 
 | Rank | Model | F1 |
 |------|-------|----|
-| 1 | CLIP Linear Probe | 0.9758 |
+| 1 | CLIP Linear Probe | **0.9758** |
 | 2 | SVM (InsightFace + CLIP) | 0.9720 |
 | 3 | Logistic Regression (InsightFace + CLIP) | 0.9700 |
 | 4 | LightGBM (InsightFace + CLIP + ConvNeXt) | 0.9680 |
 | 5 | XGBoost (InsightFace + CLIP) | 0.9660 |
+
+---
 
 ## Getting Started
 
 ### Prerequisites
 
 - Python 3.13+
-- [uv](https://docs.astral.sh/uv/) package manager
+- [uv](https://docs.astral.sh/uv/) package manager (recommended) or pip
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone <repo-url>
 cd "Project 1"
 
-# Install dependencies
+# With uv (recommended)
 uv sync
 
 # Or with pip
@@ -151,13 +193,31 @@ data/
     ...
 ```
 
-### Google OAuth Setup (Optional)
+### Running Locally
+
+```bash
+streamlit run app.py
+```
+
+The app opens at `http://localhost:8501`. If Google OAuth is not configured, it runs in **dev mode** with a default user.
+
+### Training All Models
+
+```bash
+python -m scripts.train_all
+```
+
+Trains all 51 model combinations (~40 min) and saves artifacts.
+
+<details>
+<summary><strong>Google OAuth Setup (optional)</strong></summary>
 
 1. Create a project in [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable the Google People API
-3. Create OAuth 2.0 credentials (Web application)
-4. Download as `client_secret.json` in the project root
-5. Create `.streamlit/secrets.toml`:
+2. Enable the **Google People API**
+3. Create **OAuth 2.0 credentials** (Web application type)
+4. Add `http://localhost:8501` to authorized redirect URIs and JavaScript origins
+5. Download credentials as `client_secret.json` in the project root
+6. Create `.streamlit/secrets.toml`:
 
 ```toml
 [google_auth]
@@ -165,27 +225,13 @@ cookie_secret = "<random-hex-string>"
 redirect_uri = "http://localhost:8501"
 ```
 
-If OAuth is not configured, the app runs in **dev mode** with a default user.
+</details>
 
-### Running Locally
+---
 
-```bash
-# Run the Streamlit app
-streamlit run app.py
+## Deployment
 
-# Or with make
-make run
-```
-
-### Training All Models (Offline)
-
-```bash
-python -m scripts.train_all
-```
-
-This trains all 51 model combinations (~40 minutes) and saves artifacts to `artifacts/`.
-
-## Deployment (Google Cloud Run)
+Deploy to **Google Cloud Run** with a single command.
 
 ### Prerequisites
 
@@ -202,38 +248,40 @@ make setup
 make deploy
 ```
 
-After deploying, add the Cloud Run URL to your Google OAuth authorized redirect URIs and update `.streamlit/secrets.toml`, then run:
+After deploying, add the Cloud Run URL to your OAuth authorized redirect URIs, update `.streamlit/secrets.toml`, then run `make update-secrets`.
 
-```bash
-make update-secrets
-```
-
-### Available Make Commands
+### Make Commands
 
 | Command | Description |
 |---------|-------------|
 | `make setup` | One-time GCP setup (APIs + secrets) |
 | `make deploy` | Build and deploy to Cloud Run |
-| `make update-secrets` | Update secrets after config changes |
+| `make update-secrets` | Push updated secrets to GCP |
 | `make logs` | View Cloud Run logs |
 | `make status` | Show service status |
 | `make url` | Print the deployed URL |
-| `make docker-run` | Build and test locally with Docker |
+| `make docker-run` | Test locally with Docker |
 | `make delete` | Delete the Cloud Run service |
+
+---
 
 ## Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| UI | Streamlit |
-| Auth | Google OAuth 2.0 with PKCE |
-| ML | scikit-learn, XGBoost, LightGBM, PyTorch |
-| Features | OpenCV, MediaPipe, CLIP, ConvNeXt, InsightFace |
-| Charts | Plotly |
-| Logging | Loguru |
-| Deployment | Docker, Google Cloud Run |
-| Package Manager | uv |
+| | Technology |
+|---|-----------|
+| **UI** | Streamlit |
+| **Auth** | Google OAuth 2.0 with PKCE |
+| **ML** | scikit-learn, XGBoost, LightGBM, PyTorch |
+| **Features** | OpenCV, MediaPipe, CLIP, ConvNeXt, InsightFace |
+| **Visualization** | Plotly |
+| **Logging** | Loguru |
+| **Deployment** | Docker, Google Cloud Run |
+| **Package Manager** | uv |
 
-## License
+---
 
-University coursework — not licensed for redistribution.
+<div align="center">
+
+*University of Ottawa — CSI 5386 Affective Computing*
+
+</div>
