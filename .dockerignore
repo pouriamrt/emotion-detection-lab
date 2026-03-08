@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+docs/
+logs/
+*.egg-info/
+.idea/
+.vscode/
+uv.lock
+pyproject.toml
+README.md
+client_secret.json
+.streamlit/secrets.toml
+.env
+artifacts/features/
