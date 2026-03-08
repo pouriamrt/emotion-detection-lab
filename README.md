@@ -7,7 +7,7 @@
 [![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://python.org)
 [![Streamlit](https://img.shields.io/badge/Streamlit-1.40+-FF4B4B?logo=streamlit&logoColor=white)](https://streamlit.io)
 [![PyTorch](https://img.shields.io/badge/PyTorch-2.4+-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org)
-[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-Deployed-4285F4?logo=googlecloud&logoColor=white)](https://cloud.google.com/run)
+[![Cloud Run](https://img.shields.io/badge/Cloud%20Run-Live-4285F4?logo=googlecloud&logoColor=white)](https://emotion-detection-991380836709.us-central1.run.app/)
 [![License](https://img.shields.io/badge/License-Academic-gray)]()
 
 *An interactive web application for training, evaluating, and comparing 51 emotion classification models on the SMILE_PLUS dataset.*
@@ -16,7 +16,7 @@
 
 ---
 
-**Best Model:** CLIP Linear Probe | **F1 = 0.9758** | **51 Models Trained** | **10-Fold CV**
+**[Live Demo](https://emotion-detection-991380836709.us-central1.run.app/)** | **Best Model:** CLIP Linear Probe | **F1 = 0.9758** | **51 Models Trained**
 
 </div>
 
