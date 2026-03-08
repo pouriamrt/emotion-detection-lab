@@ -30,7 +30,7 @@ update-secrets: ## Update existing secrets with current local files
 	gcloud secrets versions add streamlit-secrets --data-file=.streamlit/secrets.toml
 
 # ── Build & Deploy ────────────────────────────────────────────────────
-.PHONY: build deploy
+.PHONY: build deploy deploy-only
 
 build: ## Build container image with Cloud Build
 	gcloud builds submit --tag $(IMAGE)
@@ -44,6 +44,11 @@ deploy: build ## Build and deploy to Cloud Run
 	@echo IMPORTANT: Add the URL above to Google OAuth authorized redirect URIs
 	@echo and update .streamlit/secrets.toml redirect_uri, then run: make update-secrets
 	@echo ──────────────────────────────────────────────────────
+
+deploy-only: ## Deploy without rebuilding (uses last built image)
+	gcloud run deploy $(SERVICE_NAME) --image $(IMAGE) --platform managed --region $(REGION) --allow-unauthenticated --memory $(MEMORY) --cpu $(CPU) --timeout $(TIMEOUT) --session-affinity --min-instances 0 --max-instances 3 --set-secrets="/app/client_secret.json=client-secret-json:latest,/app/.streamlit/secrets.toml=streamlit-secrets:latest"
+	@echo.
+	@gcloud run services describe $(SERVICE_NAME) --region $(REGION) --format "value(status.url)"
 
 # ── Local ─────────────────────────────────────────────────────────────
 .PHONY: run docker-build docker-run
@@ -83,6 +88,7 @@ help: ## Show this help
 	@echo   update-secrets     Update existing secrets with current local files
 	@echo   build              Build container image with Cloud Build
 	@echo   deploy             Build and deploy to Cloud Run
+	@echo   deploy-only        Deploy without rebuilding
 	@echo   run                Run locally with Streamlit
 	@echo   docker-build       Build Docker image locally
 	@echo   docker-run         Build and run locally in Docker
