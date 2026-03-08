@@ -1,0 +1,33 @@
+# Cloud Build ignore — controls what gets uploaded to Cloud Build.
+# This is separate from .gitignore so we can include data/ and models/
+# in the Docker build context while keeping them out of git.
+
+.venv/
+__pycache__/
+*.py[oc]
+.git/
+.gitignore
+.gcloudignore
+
+# Secrets (mounted via GCP Secret Manager, not baked into image)
+client_secret.json
+.streamlit/secrets.toml
+.env
+
+# Not needed in production
+docs/
+logs/
+build/
+dist/
+wheels/
+*.egg-info
+
+# IDE
+.idea/
+.vscode/
+
+# Cached features (large, not needed — extracted at runtime)
+artifacts/features/
+
+# Lock files
+uv.lock
