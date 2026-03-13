@@ -12,7 +12,7 @@
 
 *An interactive web application for training, evaluating, and comparing 51 emotion classification models on the SMILE_PLUS dataset.*
 
-**CSI 5386 -- Affective Computing | University of Ottawa**
+**DTI 6402 -- Affective Computing | University of Ottawa**
 
 ---
 
@@ -329,6 +329,6 @@ The app will be available at **http://localhost:8080**.
 
 <div align="center">
 
-*University of Ottawa -- CSI 5386 Affective Computing*
+*University of Ottawa -- DTI 6402 Affective Computing*
 
 </div>
