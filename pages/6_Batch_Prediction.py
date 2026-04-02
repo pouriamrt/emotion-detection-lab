@@ -256,4 +256,93 @@ for row_start in range(0, len(filenames), n_cols):
             )
             st.caption(filenames[idx])
 
+# ── Evaluation metrics (only when ground-truth labels provided) ────────
+if matched_gt is not None and len(matched_gt) > 0:
+    from src.evaluation import compute_metrics
+
+    st.markdown("---")
+    st.subheader("Evaluation Metrics")
+
+    n_matched = len(matched_gt)
+    n_total = len(filenames)
+    n_unmatched = n_total - n_matched
+    st.info(
+        f"Evaluated on **{n_matched}** of **{n_total}** uploaded images"
+        + (f" ({n_unmatched} had no matching label)." if n_unmatched > 0 else ".")
+    )
+
+    # Build matched arrays
+    matched_indices = sorted(matched_gt.keys())
+    y_true = np.array([matched_gt[i] for i in matched_indices])
+    y_pred = np.array([predictions[i] for i in matched_indices])
+    y_prob_matched = None
+    if probas is not None:
+        y_prob_matched = np.array([probas[i, 1] for i in matched_indices])
+
+    metrics = compute_metrics(y_true, y_pred, y_prob=y_prob_matched)
+
+    # Metric cards
+    mc1, mc2, mc3, mc4, mc5, mc6 = st.columns(6)
+    mc1.metric("Accuracy", f"{metrics['accuracy']:.4f}")
+    mc2.metric("F1 Score", f"{metrics['f1']:.4f}")
+    mc3.metric("Precision", f"{metrics['precision']:.4f}")
+    mc4.metric("Recall", f"{metrics['recall']:.4f}")
+    mc5.metric("FPR", f"{metrics['fpr']:.4f}")
+    mc6.metric("Specificity", f"{metrics['specificity']:.4f}")
+
+    # Confusion matrix heatmap
+    cm = np.array(metrics["confusion_matrix"])
+    fig_cm = px.imshow(
+        cm,
+        labels=dict(x="Predicted", y="Actual", color="Count"),
+        x=[NEGATIVE_LABEL, POSITIVE_LABEL],
+        y=[NEGATIVE_LABEL, POSITIVE_LABEL],
+        text_auto=True,
+        color_continuous_scale=[[0, "#2ecc71"], [0.5, "#f5f5f5"], [1, "#e74c3c"]],
+        title="Confusion Matrix",
+    )
+    fig_cm.update_layout(xaxis_title="Predicted", yaxis_title="Actual")
+    st.plotly_chart(fig_cm, use_container_width=True)
+
+    # ROC curve (conditional)
+    if metrics["roc"] is not None:
+        import plotly.graph_objects as go
+
+        roc = metrics["roc"]
+        fig_roc = go.Figure()
+        fig_roc.add_trace(
+            go.Scatter(
+                x=roc["fpr"],
+                y=roc["tpr"],
+                mode="lines",
+                name=f"ROC (AUC = {roc['auc']:.4f})",
+                line=dict(color="#3498db", width=2),
+            )
+        )
+        fig_roc.add_trace(
+            go.Scatter(
+                x=[0, 1],
+                y=[0, 1],
+                mode="lines",
+                name="Random",
+                line=dict(color="gray", width=1, dash="dash"),
+            )
+        )
+        fig_roc.update_layout(
+            title=f"ROC Curve (AUC = {roc['auc']:.4f})",
+            xaxis_title="False Positive Rate",
+            yaxis_title="True Positive Rate",
+            showlegend=True,
+        )
+        st.plotly_chart(fig_roc, use_container_width=True)
+    elif y_prob_matched is not None:
+        st.info(
+            "ROC curve is not available: ground-truth labels contain only one class."
+        )
+
+    log.info(
+        f"Evaluation metrics computed: F1={metrics['f1']:.4f} "
+        f"Acc={metrics['accuracy']:.4f} on {n_matched} matched images"
+    )
+
 log.info(f"Batch prediction page completed for model: {selected_model}")
