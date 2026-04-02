@@ -19,7 +19,9 @@ with st.sidebar:
     st.caption(user["email"])
 
 st.title("Batch Prediction")
-st.markdown("Upload face images and classify them as **happy** or **neutral** using a trained model.")
+st.markdown(
+    "Upload face images and classify them as **happy** or **neutral** using a trained model."
+)
 
 # ── Load metadata ───────────────────────────────────────────────────────
 if not METADATA_PATH.exists():
@@ -112,7 +114,9 @@ for f in uploaded_files:
         skipped.append(f.name)
         continue
     images_color.append(cv2.resize(img_bgr, (224, 224)))
-    images_gray.append(cv2.resize(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY), (128, 128)))
+    images_gray.append(
+        cv2.resize(cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY), (128, 128))
+    )
     filenames.append(f.name)
 
 if skipped:
@@ -125,7 +129,9 @@ if not filenames:
 images_color_arr = np.array(images_color)
 images_gray_arr = np.array(images_gray)
 
-st.markdown(f"**{len(filenames)} image(s) loaded.** Click **Predict** to run inference.")
+st.markdown(
+    f"**{len(filenames)} image(s) loaded.** Click **Predict** to run inference."
+)
 
 # ── Predict button ──────────────────────────────────────────────────────
 if not st.button("Predict", type="primary"):
@@ -147,7 +153,9 @@ with st.spinner("Extracting features and running predictions..."):
     # 1. Extract features
     feature_methods = model_info["features"]
     log.info(f"Extracting features {feature_methods} for {len(filenames)} images")
-    X = extract_features(images_gray_arr, images_color_arr, feature_methods, cache=False)
+    X = extract_features(
+        images_gray_arr, images_color_arr, feature_methods, cache=False
+    )
 
     # 2. Load model and predict
     artifact = joblib.load(str(model_path))
@@ -156,7 +164,9 @@ with st.spinner("Extracting features and running predictions..."):
         scaler = artifact["scaler"]
         X_scaled = scaler.transform(X)
         predictions = model.predict(X_scaled)
-        probas = model.predict_proba(X_scaled) if hasattr(model, "predict_proba") else None
+        probas = (
+            model.predict_proba(X_scaled) if hasattr(model, "predict_proba") else None
+        )
     else:
         model = artifact
         predictions = model.predict(X)
@@ -198,13 +208,21 @@ if ground_truth is not None:
             st.warning(
                 f"{len(unmatched_images)} image(s) had no matching label: "
                 f"{', '.join(unmatched_images[:10])}"
-                + (f" and {len(unmatched_images) - 10} more" if len(unmatched_images) > 10 else "")
+                + (
+                    f" and {len(unmatched_images) - 10} more"
+                    if len(unmatched_images) > 10
+                    else ""
+                )
             )
         if unmatched_labels:
             st.warning(
                 f"{len(unmatched_labels)} label(s) had no matching image: "
                 f"{', '.join(unmatched_labels[:10])}"
-                + (f" and {len(unmatched_labels) - 10} more" if len(unmatched_labels) > 10 else "")
+                + (
+                    f" and {len(unmatched_labels) - 10} more"
+                    if len(unmatched_labels) > 10
+                    else ""
+                )
             )
 
 # ── Summary ─────────────────────────────────────────────────────────────
@@ -296,10 +314,12 @@ if matched_gt is not None and len(matched_gt) > 0:
 
     # Color z: positive for correct (diagonal), negative for errors (off-diagonal)
     max_val = max(cm.max(), 1)
-    color_z = np.array([
-        [cm[0, 0] / max_val, -cm[0, 1] / max_val],
-        [-cm[1, 0] / max_val, cm[1, 1] / max_val],
-    ])
+    color_z = np.array(
+        [
+            [cm[0, 0] / max_val, -cm[0, 1] / max_val],
+            [-cm[1, 0] / max_val, cm[1, 1] / max_val],
+        ]
+    )
 
     fig_cm = px.imshow(
         color_z,
@@ -314,7 +334,8 @@ if matched_gt is not None and len(matched_gt) > 0:
     for i in range(2):
         for j in range(2):
             fig_cm.add_annotation(
-                x=cm_labels[j], y=cm_labels[i],
+                x=cm_labels[j],
+                y=cm_labels[i],
                 text=str(cm[i, j]),
                 showarrow=False,
                 font=dict(size=18, color="black"),

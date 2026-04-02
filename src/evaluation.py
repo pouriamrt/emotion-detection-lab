@@ -55,9 +55,7 @@ def cross_validate(
         f"X shape: {X.shape}, positive rate: {y.mean():.2f}"
     )
 
-    skf = StratifiedKFold(
-        n_splits=n_folds, shuffle=True, random_state=RANDOM_SEED
-    )
+    skf = StratifiedKFold(n_splits=n_folds, shuffle=True, random_state=RANDOM_SEED)
 
     fold_results = []
     all_y_true, all_y_prob = [], []
@@ -124,9 +122,7 @@ def cross_validate(
     avg_fpr = float(np.mean([r["fpr"] for r in fold_results]))
 
     # Aggregate confusion matrix (sum across folds)
-    agg_cm = np.sum(
-        [np.array(r["confusion_matrix"]) for r in fold_results], axis=0
-    )
+    agg_cm = np.sum([np.array(r["confusion_matrix"]) for r in fold_results], axis=0)
 
     # Global ROC curve from pooled predictions
     roc_data: dict = {"fpr": [], "tpr": [], "auc": 0.0}
