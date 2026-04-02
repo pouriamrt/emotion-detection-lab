@@ -172,6 +172,41 @@ log.info(
     f"{len(predictions) - sum(predictions)} neutral"
 )
 
+# ── Match ground-truth labels to predictions ───────────────────────────
+matched_gt: dict[int, int] | None = None  # idx -> ground-truth label_int
+if ground_truth is not None:
+    uploaded_lower = {fn.lower(): i for i, fn in enumerate(filenames)}
+    matched_gt = {}
+    unmatched_images = []
+    unmatched_labels = []
+
+    for fn_lower, gt_label in ground_truth.items():
+        if fn_lower in uploaded_lower:
+            matched_gt[uploaded_lower[fn_lower]] = gt_label
+        else:
+            unmatched_labels.append(fn_lower)
+
+    for i, fn in enumerate(filenames):
+        if i not in matched_gt:
+            unmatched_images.append(fn)
+
+    if len(matched_gt) == 0:
+        st.warning("No filenames matched between uploaded images and label file.")
+        matched_gt = None
+    else:
+        if unmatched_images:
+            st.warning(
+                f"{len(unmatched_images)} image(s) had no matching label: "
+                f"{', '.join(unmatched_images[:10])}"
+                + (f" and {len(unmatched_images) - 10} more" if len(unmatched_images) > 10 else "")
+            )
+        if unmatched_labels:
+            st.warning(
+                f"{len(unmatched_labels)} label(s) had no matching image: "
+                f"{', '.join(unmatched_labels[:10])}"
+                + (f" and {len(unmatched_labels) - 10} more" if len(unmatched_labels) > 10 else "")
+            )
+
 # ── Summary ─────────────────────────────────────────────────────────────
 st.markdown("---")
 st.subheader("Summary")
