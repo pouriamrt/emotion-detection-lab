@@ -191,7 +191,7 @@ def compute_metrics(
     spec = 1.0 - fpr_val
 
     roc_data = None
-    if y_prob is not None and len(set(y_true)) > 1:
+    if y_prob is not None and y_true.min() != y_true.max():
         fpr_arr, tpr_arr, _ = roc_curve(y_true, y_prob, pos_label=1)
         roc_data = {
             "fpr": fpr_arr.tolist(),

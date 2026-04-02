@@ -84,7 +84,8 @@ if label_file is not None:
 
     if label_df is not None:
         label_df["label_lower"] = label_df["label"].astype(str).str.strip().str.lower()
-        invalid = label_df[~label_df["label_lower"].isin(["happy", "neutral"])]
+        _valid = {POSITIVE_LABEL.lower(), NEGATIVE_LABEL.lower()}
+        invalid = label_df[~label_df["label_lower"].isin(_valid)]
         if len(invalid) > 0:
             bad_vals = invalid["label"].unique().tolist()
             st.error(
@@ -94,10 +95,12 @@ if label_file is not None:
             label_df = None
 
     if label_df is not None:
-        ground_truth = {
-            row["filename"].lower(): int(row["label_lower"] == "happy")
-            for _, row in label_df.iterrows()
-        }
+        ground_truth = dict(
+            zip(
+                label_df["filename"].str.lower(),
+                (label_df["label_lower"] == POSITIVE_LABEL.lower()).astype(int),
+            )
+        )
 
 if not uploaded_files:
     st.info("Upload one or more face images to get started.")
@@ -202,30 +205,19 @@ if ground_truth is not None:
         if i not in matched_gt:
             unmatched_images.append(fn)
 
+    def _truncated_warning(items: list[str], noun: str) -> None:
+        preview = ", ".join(items[:10])
+        suffix = f" and {len(items) - 10} more" if len(items) > 10 else ""
+        st.warning(f"{len(items)} {noun}: {preview}{suffix}")
+
     if len(matched_gt) == 0:
         st.warning("No filenames matched between uploaded images and label file.")
         matched_gt = None
     else:
         if unmatched_images:
-            st.warning(
-                f"{len(unmatched_images)} image(s) had no matching label: "
-                f"{', '.join(unmatched_images[:10])}"
-                + (
-                    f" and {len(unmatched_images) - 10} more"
-                    if len(unmatched_images) > 10
-                    else ""
-                )
-            )
+            _truncated_warning(unmatched_images, "image(s) had no matching label")
         if unmatched_labels:
-            st.warning(
-                f"{len(unmatched_labels)} label(s) had no matching image: "
-                f"{', '.join(unmatched_labels[:10])}"
-                + (
-                    f" and {len(unmatched_labels) - 10} more"
-                    if len(unmatched_labels) > 10
-                    else ""
-                )
-            )
+            _truncated_warning(unmatched_labels, "label(s) had no matching image")
 
 # ── Summary ─────────────────────────────────────────────────────────────
 st.markdown("---")
@@ -291,13 +283,11 @@ if matched_gt is not None and len(matched_gt) > 0:
         + (f" ({n_unmatched} had no matching label)." if n_unmatched > 0 else ".")
     )
 
-    # Build matched arrays
+    # Build matched arrays using numpy fancy indexing
     matched_indices = sorted(matched_gt.keys())
     y_true = np.array([matched_gt[i] for i in matched_indices])
-    y_pred = np.array([predictions[i] for i in matched_indices])
-    y_prob_matched = None
-    if probas is not None:
-        y_prob_matched = np.array([probas[i, 1] for i in matched_indices])
+    y_pred = predictions[matched_indices]
+    y_prob_matched = probas[matched_indices, 1] if probas is not None else None
 
     metrics = compute_metrics(y_true, y_pred, y_prob=y_prob_matched)
 
