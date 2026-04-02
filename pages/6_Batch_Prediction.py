@@ -76,12 +76,14 @@ if label_file is not None:
         label_df = None
 
     if label_df is not None:
-        if label_df.shape[1] < 2:
-            st.error("Label CSV must have two columns: filename, label.")
+        # Drop rows with missing filename or label (handles blank cells, single-column CSVs)
+        label_df = label_df.dropna(subset=["filename", "label"])
+        if label_df.empty:
+            st.error("Label CSV contains no valid rows (expected: filename,label).")
             label_df = None
 
     if label_df is not None:
-        label_df["label_lower"] = label_df["label"].str.strip().str.lower()
+        label_df["label_lower"] = label_df["label"].astype(str).str.strip().str.lower()
         invalid = label_df[~label_df["label_lower"].isin(["happy", "neutral"])]
         if len(invalid) > 0:
             bad_vals = invalid["label"].unique().tolist()
