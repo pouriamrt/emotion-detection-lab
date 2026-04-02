@@ -290,18 +290,37 @@ if matched_gt is not None and len(matched_gt) > 0:
     mc5.metric("FPR", f"{metrics['fpr']:.4f}")
     mc6.metric("Specificity", f"{metrics['specificity']:.4f}")
 
-    # Confusion matrix heatmap
+    # Confusion matrix heatmap (green=correct diagonal, red=error off-diagonal)
     cm = np.array(metrics["confusion_matrix"])
+    cm_labels = [NEGATIVE_LABEL, POSITIVE_LABEL]
+
+    # Color z: positive for correct (diagonal), negative for errors (off-diagonal)
+    max_val = max(cm.max(), 1)
+    color_z = np.array([
+        [cm[0, 0] / max_val, -cm[0, 1] / max_val],
+        [-cm[1, 0] / max_val, cm[1, 1] / max_val],
+    ])
+
     fig_cm = px.imshow(
-        cm,
-        labels=dict(x="Predicted", y="Actual", color="Count"),
-        x=[NEGATIVE_LABEL, POSITIVE_LABEL],
-        y=[NEGATIVE_LABEL, POSITIVE_LABEL],
-        text_auto=True,
-        color_continuous_scale=[[0, "#2ecc71"], [0.5, "#f5f5f5"], [1, "#e74c3c"]],
+        color_z,
+        labels=dict(x="Predicted", y="Actual"),
+        x=cm_labels,
+        y=cm_labels,
+        color_continuous_scale=[[0, "#e74c3c"], [0.5, "#f5f5f5"], [1, "#2ecc71"]],
+        range_color=[-1, 1],
         title="Confusion Matrix",
     )
+    # Overlay actual count annotations
+    for i in range(2):
+        for j in range(2):
+            fig_cm.add_annotation(
+                x=cm_labels[j], y=cm_labels[i],
+                text=str(cm[i, j]),
+                showarrow=False,
+                font=dict(size=18, color="black"),
+            )
     fig_cm.update_layout(xaxis_title="Predicted", yaxis_title="Actual")
+    fig_cm.update_coloraxes(showscale=False)
     st.plotly_chart(fig_cm, use_container_width=True)
 
     # ROC curve (conditional)
