@@ -25,6 +25,7 @@
 ## Table of Contents
 
 - [Overview](#overview)
+- [Using the Web App](#using-the-web-app)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Clone the Repository](#1-clone-the-repository)
@@ -47,6 +48,47 @@
 Emotion Detection Lab is a full-stack ML application that lets you explore a facial expression dataset, engineer features, train classifiers, compare results on a leaderboard, and run batch predictions -- all through a clean Streamlit interface with Google OAuth.
 
 The app supports **7 feature extraction methods** (from HOG to CLIP), **9 classifiers** (traditional + deep linear probes), and evaluates all **51 model combinations** with 10-fold stratified cross-validation.
+
+---
+
+## Using the Web App
+
+The app is live at **[emotion-detection-991380836709.us-central1.run.app](https://emotion-detection-991380836709.us-central1.run.app/)**. Sign in with your Google account to get started.
+
+### Exploring the Dataset
+
+Navigate to **Dataset Explorer** to browse the SMILE_PLUS dataset. You can view the class distribution (250 happy, 250 neutral), browse sample images, and see image statistics like resolution and intensity histograms.
+
+### Training a Model
+
+1. Go to **Feature Engineering** and select which feature extraction methods to use (HOG, LBP, Gabor, Landmarks, ConvNeXt, CLIP, InsightFace). Click **Extract** to compute and cache features.
+2. Go to **Model Training**, pick a classifier (SVM, Random Forest, XGBoost, etc.) and a feature set. Adjust hyperparameters with the sliders, then click **Train** to run 10-fold cross-validation.
+3. View detailed per-fold results, confusion matrices, and ROC curves on the **Results** page.
+
+### Comparing Models
+
+The **Model Comparison** page shows a leaderboard of all trained models ranked by F1 score. Use the bar chart and radar chart to compare performance across metrics.
+
+### Batch Prediction on Your Own Images
+
+Go to the **Batch Prediction** page to classify your own face images:
+
+1. **Select a model** from the dropdown (defaults to the best-performing model).
+2. **Upload face images** (JPG, JPEG, PNG, or BMP). You can upload multiple images at once.
+3. **(Optional) Upload a ground-truth label file** to evaluate the model on your data. The label file should be a CSV with two columns and no header: `filename,label`, where the label is either `happy` or `neutral`. For example:
+   ```
+   photo1.jpg,happy
+   photo2.jpg,neutral
+   photo3.jpg,happy
+   ```
+4. Click **Predict** to run inference.
+
+**Results you get:**
+- A summary with total image count and happy/neutral distribution.
+- If you uploaded labels: **evaluation metrics** (Accuracy, F1, Precision, Recall, FPR, Specificity), a **confusion matrix** (color-coded: green for correct, red for errors), and an **ROC curve** with AUC.
+- Per-image predictions with the predicted label, confidence score, and (if labels were provided) a checkmark or X indicating whether the prediction was correct.
+
+Filename matching between your images and the label CSV is case-insensitive, so `Photo1.JPG` in the CSV will match `photo1.jpg` in your upload. If some images have no matching label (or vice versa), the app computes metrics on the matched subset and shows warnings for unmatched files.
 
 ---
 
@@ -149,7 +191,7 @@ redirect_uri = "http://localhost:8501"
 | **Model Training** | Train any model/feature combination with hyperparameter tuning |
 | **Results** | Confusion matrices, ROC curves, and per-fold breakdowns |
 | **Model Comparison** | Leaderboard, bar charts, and radar chart across all models |
-| **Batch Prediction** | Upload face images and classify them with any trained model |
+| **Batch Prediction** | Upload face images to classify with any trained model; optionally upload ground-truth labels to get evaluation metrics (F1, accuracy, confusion matrix, ROC/AUC) |
 
 ---
 
@@ -287,14 +329,14 @@ The app will be available at **http://localhost:8080**.
 │   ├── 3_Model_Training.py       # Interactive training with 10-fold CV
 │   ├── 4_Results.py              # Per-model metrics & charts
 │   ├── 5_Model_Comparison.py     # Cross-model leaderboard
-│   └── 6_Batch_Prediction.py     # Inference on uploaded images
+│   └── 6_Batch_Prediction.py     # Inference + optional label evaluation
 ├── src/
 │   ├── auth.py                   # Google OAuth 2.0 with PKCE
 │   ├── config.py                 # Paths, constants, registries
 │   ├── data_loader.py            # SMILE_PLUS dataset loading
 │   ├── features.py               # 7 feature extractors with caching
 │   ├── models.py                 # Model factories (traditional + deep)
-│   ├── evaluation.py             # 10-fold stratified cross-validation
+│   ├── evaluation.py             # 10-fold CV + compute_metrics() helper
 │   └── logger.py                 # Loguru logging setup
 ├── scripts/
 │   └── train_all.py              # Offline batch training of all 51 models
@@ -303,6 +345,8 @@ The app will be available at **http://localhost:8080**.
 │   ├── models/                   # Trained .joblib files (51 models)
 │   ├── features/                 # Cached .npy feature matrices
 │   └── results/                  # Per-model CV result .json files
+├── tests/
+│   └── test_evaluation.py        # Unit tests for compute_metrics()
 ├── data/                         # SMILE_PLUS dataset (500 images)
 ├── Dockerfile                    # Production container (CPU-only PyTorch)
 ├── Makefile                      # Build, deploy, and manage commands
