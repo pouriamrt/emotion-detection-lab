@@ -10,6 +10,7 @@ from sklearn.base import clone
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import (
+    accuracy_score,
     f1_score,
     precision_score,
     recall_score,
@@ -165,3 +166,51 @@ def cross_validate(
     )
 
     return results
+
+
+def compute_metrics(
+    y_true: np.ndarray,
+    y_pred: np.ndarray,
+    y_prob: np.ndarray | None = None,
+) -> dict:
+    """Compute evaluation metrics comparing predictions to ground truth.
+
+    Args:
+        y_true: 1D array of 0/1 ground-truth labels.
+        y_pred: 1D array of 0/1 predictions.
+        y_prob: Optional 1D array of positive-class probabilities.
+
+    Returns:
+        Dict with accuracy, f1, precision, recall, fpr, specificity,
+        confusion_matrix, roc (or None), and n_samples.
+    """
+    acc = float(accuracy_score(y_true, y_pred))
+    f1 = float(f1_score(y_true, y_pred, pos_label=1, zero_division=0))
+    prec = float(precision_score(y_true, y_pred, pos_label=1, zero_division=0))
+    rec = float(recall_score(y_true, y_pred, pos_label=1, zero_division=0))
+
+    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    tn, fp, fn, tp = cm.ravel()
+    fpr_val = float(fp / max(fp + tn, 1))
+    spec = 1.0 - fpr_val
+
+    roc_data = None
+    if y_prob is not None and len(set(y_true)) > 1:
+        fpr_arr, tpr_arr, _ = roc_curve(y_true, y_prob, pos_label=1)
+        roc_data = {
+            "fpr": fpr_arr.tolist(),
+            "tpr": tpr_arr.tolist(),
+            "auc": float(auc(fpr_arr, tpr_arr)),
+        }
+
+    return {
+        "accuracy": acc,
+        "f1": f1,
+        "precision": prec,
+        "recall": rec,
+        "fpr": fpr_val,
+        "specificity": spec,
+        "confusion_matrix": cm.tolist(),
+        "roc": roc_data,
+        "n_samples": len(y_true),
+    }
