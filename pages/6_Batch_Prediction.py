@@ -238,14 +238,21 @@ for row_start in range(0, len(filenames), n_cols):
         if idx >= len(filenames):
             break
         with col:
-            # Show thumbnail (convert BGR→RGB for display)
             img_rgb = cv2.cvtColor(images_color[idx], cv2.COLOR_BGR2RGB)
             st.image(img_rgb, width=150)
             label = labels[idx]
             color = "green" if label == POSITIVE_LABEL else "blue"
             conf_str = f" ({confidences[idx]:.1%})" if confidences else ""
+
+            # Correctness indicator for matched images
+            indicator = ""
+            if matched_gt is not None and idx in matched_gt:
+                gt_label_int = matched_gt[idx]
+                pred_correct = predictions[idx] == gt_label_int
+                indicator = " :white_check_mark:" if pred_correct else " :x:"
+
             st.markdown(
-                f"**:{color}[{label.upper()}]**{conf_str}",
+                f"**:{color}[{label.upper()}]**{conf_str}{indicator}",
             )
             st.caption(filenames[idx])
 
