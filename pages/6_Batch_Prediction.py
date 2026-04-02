@@ -53,6 +53,48 @@ uploaded_files = st.file_uploader(
     accept_multiple_files=True,
 )
 
+# ── Optional label upload ──────────────────────────────────────────────
+label_file = st.file_uploader(
+    "Upload ground-truth labels (optional)",
+    type=["csv"],
+    help=(
+        "CSV with two columns, no header: filename,label. "
+        "Labels must be 'happy' or 'neutral' (case-insensitive)."
+    ),
+)
+
+ground_truth: dict[str, int] | None = None
+if label_file is not None:
+    import pandas as pd
+
+    try:
+        label_df = pd.read_csv(label_file, header=None, names=["filename", "label"])
+    except Exception as exc:
+        st.error(f"Could not parse label CSV: {exc}")
+        label_df = None
+
+    if label_df is not None:
+        if label_df.shape[1] < 2:
+            st.error("Label CSV must have two columns: filename, label.")
+            label_df = None
+
+    if label_df is not None:
+        label_df["label_lower"] = label_df["label"].str.strip().str.lower()
+        invalid = label_df[~label_df["label_lower"].isin(["happy", "neutral"])]
+        if len(invalid) > 0:
+            bad_vals = invalid["label"].unique().tolist()
+            st.error(
+                f"Invalid labels found: {bad_vals}. "
+                "Only 'happy' and 'neutral' are accepted."
+            )
+            label_df = None
+
+    if label_df is not None:
+        ground_truth = {
+            row["filename"].lower(): int(row["label_lower"] == "happy")
+            for _, row in label_df.iterrows()
+        }
+
 if not uploaded_files:
     st.info("Upload one or more face images to get started.")
     st.stop()
